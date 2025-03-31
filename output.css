@@ -4,7 +4,7 @@ html, body {
   padding: 0;
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  -webkit-app-region: drag; /* Allows dragging the window */
+  -webkit-app-region: no-drag;
 }
 
 body {
@@ -50,6 +50,16 @@ body {
   cursor: pointer;
 }
 
+.header-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  -webkit-app-region: drag;
+  z-index: 1;
+}
+
 #closeButton {
   position: absolute;
   top: 10px;
@@ -63,34 +73,12 @@ body {
   font-weight: bold;
   color: white;
   cursor: pointer;
-  -webkit-app-region: no-drag; /* Prevents button from being draggable */
+  -webkit-app-region: no-drag;
   z-index: 100;
 }
 
 #closeButton:hover {
   background: rgba(255, 0, 0, 0.9);
-}
-
-#dragButton {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 50px;
-  height: 30px;
-  background: rgba(0, 0, 255, 0.7);
-  border-radius: 5px;
-  text-align: center;
-  line-height: 30px;
-  font-weight: bold;
-  color: white;
-  cursor: grab;
-  -webkit-app-region: drag; /* Makes the button draggable */
-  z-index: 100;
-  user-select: none; /* Prevents text selection while dragging */
-}
-
-#dragButton:hover {
-  background: rgba(0, 0, 255, 0.9);
 }
 
 #conversationContainer {
