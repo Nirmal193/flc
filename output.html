@@ -7,6 +7,7 @@
 </head>
 <body>
   <div id="closeButton">X</div>
+  <div id="dragButton">Drag</div>
   <div class="controls">
     <div class="control-item">
       <label for="transparencySlider">Transparency:</label>
@@ -22,11 +23,17 @@
       <label for="textColorPicker">Text Color:</label>
       <input type="color" id="textColorPicker" value="#ffffff">
     </div>
+
+    <div class="control-item">
+      <label for="textTransparencySlider">Text Transparency:</label>
+      <input type="range" id="textTransparencySlider" min="10" max="100" value="100">
+    </div>
   </div>
 
-  <div id="conversationContainer">
+  <div id="conversationContainer" style="-webkit-app-region: no-drag;">
     <!-- Messages will be added here -->
   </div>
+  <div id="loadingMessage" class="message system" style="display: none;">Processing screenshot...</div>
 
   <script src="output.js"></script>
 </body>

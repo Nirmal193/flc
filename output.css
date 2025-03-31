@@ -71,12 +71,35 @@ body {
   background: rgba(255, 0, 0, 0.9);
 }
 
+#dragButton {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 50px;
+  height: 30px;
+  background: rgba(0, 0, 255, 0.7);
+  border-radius: 5px;
+  text-align: center;
+  line-height: 30px;
+  font-weight: bold;
+  color: white;
+  cursor: grab;
+  -webkit-app-region: drag; /* Makes the button draggable */
+  z-index: 100;
+  user-select: none; /* Prevents text selection while dragging */
+}
+
+#dragButton:hover {
+  background: rgba(0, 0, 255, 0.9);
+}
+
 #conversationContainer {
   flex: 1;
   overflow-y: auto;
   position: relative;
   margin-right: 6px; /* Space for scrollbar */
   padding-bottom: 10px;
+  -webkit-app-region: no-drag; /* Prevents dragging the window when interacting with the scrollbar */
 }
 
 .message {
@@ -92,6 +115,21 @@ body {
 
 .message.system {
   align-self: flex-start;
+}
+
+#loadingMessage {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-style: italic;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px 20px;
+  border-radius: 8px;
+  z-index: 1000;
+  display: none; /* Initially hidden */
 }
 
 /* Scrollbar styling */

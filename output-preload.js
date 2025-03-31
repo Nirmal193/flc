@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Receive events from main process
   onUpdateAnalysis: (callback) => ipcRenderer.on('update-analysis', (_, text) => callback(text)),
-  onUpdateBgColor: (callback) => ipcRenderer.on('update-bg-color', (_, color) => callback(color))
+  onUpdateBgColor: (callback) => ipcRenderer.on('update-bg-color', (_, color) => callback(color)),
+  onLoading: (callback) => ipcRenderer.on('loading', (_, isLoading) => callback(isLoading))
 });

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const textColorPicker = document.getElementById('textColorPicker');
   const closeButton = document.getElementById('closeButton');
   const conversationContainer = document.getElementById('conversationContainer');
+  const textTransparencySlider = document.getElementById('textTransparencySlider');
   
   // Apply background color to conversation container
   function applyBackgroundColor(color, opacity) {
@@ -26,25 +27,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Update text transparency
+  function updateTextTransparency(opacity) {
+    document.querySelectorAll('.message').forEach(msg => {
+      const currentColor = window.getComputedStyle(msg).color;
+      const rgba = currentColor.replace(/rgba?\(([^)]+)\)/, (_, values) => {
+        const [r, g, b] = values.split(',').map(v => v.trim());
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+      });
+      msg.style.color = rgba;
+    });
+  }
+
   // Load saved preferences
   function loadSavedPreferences() {
     const savedOpacity = localStorage.getItem('windowOpacity') || 0.9;
     const savedBgColor = localStorage.getItem('bgColor') || '#333333';
     const savedTextColor = localStorage.getItem('textColor') || '#ffffff';
+    const savedTextTransparency = localStorage.getItem('textTransparency') || 1;
     
     // Apply saved values to controls
     transparencySlider.value = savedOpacity * 100;
     bgColorPicker.value = savedBgColor;
     textColorPicker.value = savedTextColor;
+    textTransparencySlider.value = savedTextTransparency * 100;
     
     // Apply settings
     window.electronAPI.setWindowOpacity(parseFloat(savedOpacity));
+    updateTextTransparency(savedTextTransparency);
     
     // Store for use with new messages
     window.currentSettings = {
       bgColor: savedBgColor,
       textColor: savedTextColor,
-      opacity: savedOpacity
+      opacity: savedOpacity,
+      textTransparency: savedTextTransparency
     };
   }
   
@@ -76,6 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const color = event.target.value;
     savePreference('textColor', color);
     updateTextColor(color);
+  });
+
+  // Text transparency slider
+  textTransparencySlider.addEventListener('change', (event) => {
+    const opacity = event.target.value / 100;
+    savePreference('textTransparency', opacity);
+    updateTextTransparency(opacity);
   });
 
   // Close button
@@ -115,7 +139,22 @@ document.addEventListener('DOMContentLoaded', () => {
     savePreference('bgColor', color);
     applyBackgroundColor(color, window.currentSettings.opacity / 2);
   });
-  
+
+  // Show or hide the loader at the bottom of the screen
+  function toggleLoadingIndicator(isLoading) {
+    const loadingMessage = document.getElementById('loadingMessage');
+    if (isLoading) {
+      loadingMessage.style.display = 'block';
+    } else {
+      loadingMessage.style.display = 'none';
+    }
+  }
+
+  // Listen for loading events
+  window.electronAPI.onLoading((isLoading) => {
+    toggleLoadingIndicator(isLoading);
+  });
+
   // Initialize with saved preferences
   window.currentSettings = {};
   loadSavedPreferences();

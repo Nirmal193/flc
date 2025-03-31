@@ -21,6 +21,7 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 }
+
 // Add this to your existing main.js file where the IPC handlers are set up
 
 // Add handler for text color (though this is handled client-side, we're adding the handler for future needs)
@@ -38,13 +39,15 @@ ipcMain.on('set-text-color', (_event, color) => {
 // Update the createOrUpdateOutputWindow function to handle text properly
 // Replace the createOrUpdateOutputWindow function with this one in your main.js file
 
-// Replace the createOrUpdateOutputWindow function in your main.js
-
 function createOrUpdateOutputWindow(analysisText) {
   if (outputWindow && !outputWindow.isDestroyed()) {
-    outputWindow.webContents.send('update-analysis', analysisText);
+    outputWindow.webContents.send('loading', true); // Show loader
     outputWindow.show();
     outputWindow.focus();
+    setTimeout(() => {
+      outputWindow.webContents.send('update-analysis', analysisText);
+      outputWindow.webContents.send('loading', false); // Hide loader
+    }, 300);
   } else {
     // Create a new window with true transparency
     outputWindow = new BrowserWindow({
@@ -68,8 +71,10 @@ function createOrUpdateOutputWindow(analysisText) {
     // Load the HTML file
     outputWindow.loadFile('output.html')
       .then(() => {
+        outputWindow.webContents.send('loading', true); // Show loader
         setTimeout(() => {
           outputWindow.webContents.send('update-analysis', analysisText);
+          outputWindow.webContents.send('loading', false); // Hide loader
         }, 300);
       })
       .catch(err => console.error('Error loading output window:', err));
@@ -107,7 +112,6 @@ ipcMain.on('close-output-window', () => {
   }
 });
 
-
 // ✅ Main App Ready
 app.whenReady().then(() => {
   createWindow();
@@ -115,18 +119,19 @@ app.whenReady().then(() => {
   // Register global shortcut
   const shortcut = 'Control+M';
   const shortcutRegistered = globalShortcut.register(shortcut, async () => {
-    console.log(`Global shortcut ${shortcut} triggered.`);
-    
-    const settings = store.get('settings') || {};
-    const { apiKey, model, prompt } = settings;
-    console.log('Retrieved settings:', settings);
-
-    if (!apiKey || !model) {
-      dialog.showErrorBox('Settings Missing', 'Please set the API key and select a model in the settings.');
-      return;
-    }
-
+    if (outputWindow) outputWindow.webContents.send('loading', true); // Show loader
     try {
+      console.log(`Global shortcut ${shortcut} triggered.`);
+      
+      const settings = store.get('settings') || {};
+      const { apiKey, model, prompt } = settings;
+      console.log('Retrieved settings:', settings);
+
+      if (!apiKey || !model) {
+        dialog.showErrorBox('Settings Missing', 'Please set the API key and select a model in the settings.');
+        return;
+      }
+
       console.log('Attempting to capture screenshot...');
       const base64Image = await captureScreenshot();
       console.log('Screenshot captured.');
@@ -163,6 +168,8 @@ app.whenReady().then(() => {
     } catch (error) {
       console.error('Error during capture and analysis:', error);
       dialog.showErrorBox('Error', `Failed to analyze screenshot: ${error.message}`);
+    } finally {
+      if (outputWindow) outputWindow.webContents.send('loading', false); // Hide loader
     }
   });
 
