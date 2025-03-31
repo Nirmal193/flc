@@ -55,7 +55,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 40px;
+  height: 150px;  /* Increased from 40px to 150px */
   -webkit-app-region: drag;
   z-index: 1;
 }
