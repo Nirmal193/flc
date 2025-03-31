@@ -2,21 +2,30 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Gemini Analysis Conversation</title>
+  <title>Gemini Analysis</title>
   <link rel="stylesheet" href="output.css">
 </head>
 <body>
   <div id="closeButton">X</div>
   <div class="controls">
-    <label>Transparency:</label>
-    <input type="range" id="transparencySlider" min="10" max="100" value="100">
+    <div class="control-item">
+      <label for="transparencySlider">Transparency:</label>
+      <input type="range" id="transparencySlider" min="10" max="100" value="90">
+    </div>
     
-    <label>Background:</label>
-    <input type="color" id="bgColorPicker" value="#f5f5f5">
+    <div class="control-item">
+      <label for="bgColorPicker">Background:</label>
+      <input type="color" id="bgColorPicker" value="#333333">
+    </div>
+    
+    <div class="control-item">
+      <label for="textColorPicker">Text Color:</label>
+      <input type="color" id="textColorPicker" value="#ffffff">
+    </div>
   </div>
 
-  <div class="conversation-container" id="conversationContainer">
-    <!-- New messages will be appended here -->
+  <div id="conversationContainer">
+    <!-- Messages will be added here -->
   </div>
 
   <script src="output.js"></script>

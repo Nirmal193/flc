@@ -1,32 +1,53 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-app-region: drag; /* Allows dragging the window */
+}
 
-
-.conversation-container {
-  max-height: 100%;
-  overflow-y: auto;
+body {
+  background-color: transparent !important;
   padding: 10px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }
 
-.message {
+.controls {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px;
+  border-radius: 8px;
   margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  max-width: 80%;
-  word-wrap: break-word;
-  backdrop-filter: blur(10px); /* Adds a glass effect */
-  background: rgba(255, 255, 255, 0.2); /* Slight white transparency */
-  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  -webkit-app-region: no-drag; /* Make controls clickable */
+  z-index: 10;
 }
 
-.message.system {
-  align-self: flex-start;
+.control-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
-body {
-  -webkit-app-region: drag; /* Allows dragging the window */
-  background: transparent;
-  margin: 0;
-  padding: 10px;
+
+.control-item label {
+  color: white;
+  font-size: 12px;
+}
+
+.control-item input[type="range"] {
+  width: 80px;
+  cursor: pointer;
+}
+
+.control-item input[type="color"] {
+  width: 24px;
+  height: 24px;
+  border: none;
+  cursor: pointer;
 }
 
 #closeButton {
@@ -35,7 +56,7 @@ body {
   right: 10px;
   width: 30px;
   height: 30px;
-  background: rgba(106, 119, 65, 0.545);
+  background: rgba(255, 0, 0, 0.7);
   border-radius: 50%;
   text-align: center;
   line-height: 30px;
@@ -43,8 +64,50 @@ body {
   color: white;
   cursor: pointer;
   -webkit-app-region: no-drag; /* Prevents button from being draggable */
+  z-index: 100;
 }
 
 #closeButton:hover {
-  background: rgb(123, 120, 77);
+  background: rgba(255, 0, 0, 0.9);
+}
+
+#conversationContainer {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  margin-right: 6px; /* Space for scrollbar */
+  padding-bottom: 10px;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 95%;
+  word-wrap: break-word;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.message.system {
+  align-self: flex-start;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }

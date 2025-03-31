@@ -21,19 +21,40 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 }
+// Add this to your existing main.js file where the IPC handlers are set up
 
-// ✅ Function to Create or Update Output Window
+// Add handler for text color (though this is handled client-side, we're adding the handler for future needs)
+ipcMain.on('set-text-color', (_event, color) => {
+  console.log("Text color updated to:", color);
+  // This will be primarily handled client-side in the renderer process
+  // But we can store it for future use if needed
+  if (store) {
+    const settings = store.get('settings') || {};
+    settings.textColor = color;
+    store.set('settings', settings);
+  }
+});
+
+// Update the createOrUpdateOutputWindow function to handle text properly
+// Replace the createOrUpdateOutputWindow function with this one in your main.js file
+
+// Replace the createOrUpdateOutputWindow function in your main.js
+
 function createOrUpdateOutputWindow(analysisText) {
   if (outputWindow && !outputWindow.isDestroyed()) {
     outputWindow.webContents.send('update-analysis', analysisText);
     outputWindow.show();
+    outputWindow.focus();
   } else {
+    // Create a new window with true transparency
     outputWindow = new BrowserWindow({
       width: 500,
       height: 400,
       alwaysOnTop: true, 
-      transparent: true,
-      frame: false, 
+      transparent: true,  // Enable transparency at the window level
+      backgroundColor: '#00000000',  // Fully transparent background color
+      opacity: 0.9,  // Initial opacity
+      frame: false,  // No window frame
       hasShadow: false,
       webPreferences: {
         preload: path.join(__dirname, 'output-preload.js'),
@@ -44,19 +65,23 @@ function createOrUpdateOutputWindow(analysisText) {
       icon: path.join(__dirname, 'assets/icon.png')
     });
 
+    // Load the HTML file
     outputWindow.loadFile('output.html')
       .then(() => {
-        outputWindow.webContents.send('update-analysis', analysisText);
+        setTimeout(() => {
+          outputWindow.webContents.send('update-analysis', analysisText);
+        }, 300);
       })
       .catch(err => console.error('Error loading output window:', err));
 
+    // Handle window close
     outputWindow.on('closed', () => {
       outputWindow = null;
     });
   }
 }
 
-
+// Update the opacity handler to directly set window opacity
 ipcMain.on('set-opacity', (_event, opacity) => {
   if (outputWindow) {
     console.log("Updating window opacity to:", opacity);
@@ -64,10 +89,13 @@ ipcMain.on('set-opacity', (_event, opacity) => {
   }
 });
 
+// Update background color handling
 ipcMain.on('set-bg-color', (_event, color) => {
   if (outputWindow) {
-    console.log("Updating window background color to:", color);
-    outputWindow.setBackgroundColor(color);
+    console.log("Background color selected:", color);
+    // We'll handle the background in the renderer process
+    // to maintain transparency
+    outputWindow.webContents.send('update-bg-color', color);
   }
 });
 
