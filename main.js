@@ -20,22 +20,21 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
-  
-  // Uncomment for debugging:
-  // mainWindow.webContents.openDevTools();
 }
 
+// ✅ Function to Create or Update Output Window
 function createOrUpdateOutputWindow(analysisText) {
   if (outputWindow && !outputWindow.isDestroyed()) {
-    // If window already exists, update its content via IPC
     outputWindow.webContents.send('update-analysis', analysisText);
     outputWindow.show();
   } else {
-    // Create a new window if it doesn't exist
     outputWindow = new BrowserWindow({
       width: 500,
       height: 400,
-      alwaysOnTop: true, // keeps the window on top
+      alwaysOnTop: true, 
+      transparent: true,
+      frame: false, 
+      hasShadow: false,
       webPreferences: {
         preload: path.join(__dirname, 'output-preload.js'),
         nodeIntegration: false,
@@ -47,7 +46,6 @@ function createOrUpdateOutputWindow(analysisText) {
 
     outputWindow.loadFile('output.html')
       .then(() => {
-        // Once loaded, send the analysis text to update the UI
         outputWindow.webContents.send('update-analysis', analysisText);
       })
       .catch(err => console.error('Error loading output window:', err));
@@ -58,15 +56,39 @@ function createOrUpdateOutputWindow(analysisText) {
   }
 }
 
+
+ipcMain.on('set-opacity', (_event, opacity) => {
+  if (outputWindow) {
+    console.log("Updating window opacity to:", opacity);
+    outputWindow.setOpacity(opacity);
+  }
+});
+
+ipcMain.on('set-bg-color', (_event, color) => {
+  if (outputWindow) {
+    console.log("Updating window background color to:", color);
+    outputWindow.setBackgroundColor(color);
+  }
+});
+
+ipcMain.on('close-output-window', () => {
+  if (outputWindow) {
+    console.log("Closing output window");
+    outputWindow.close();
+    outputWindow = null;
+  }
+});
+
+
+// ✅ Main App Ready
 app.whenReady().then(() => {
   createWindow();
 
-  // Register global keyboard shortcut: Control + PrintScreen
+  // Register global shortcut
   const shortcut = 'Control+M';
   const shortcutRegistered = globalShortcut.register(shortcut, async () => {
-  console.log(`Global shortcut ${shortcut} triggered.`);
+    console.log(`Global shortcut ${shortcut} triggered.`);
     
-    // Retrieve stored settings (expecting at least apiKey and model)
     const settings = store.get('settings') || {};
     const { apiKey, model, prompt } = settings;
     console.log('Retrieved settings:', settings);
@@ -77,15 +99,12 @@ app.whenReady().then(() => {
     }
 
     try {
-      // Capture screenshot
       console.log('Attempting to capture screenshot...');
       const base64Image = await captureScreenshot();
       console.log('Screenshot captured.');
 
-      // Use provided prompt or default one
       const userPrompt = prompt || 'What is in this image?';
 
-      // Construct the API URL with the selected model and API key
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       console.log('API URL:', apiUrl);
       
@@ -93,43 +112,24 @@ app.whenReady().then(() => {
         contents: [
           {
             parts: [
-              {
-                text: userPrompt
-              },
-              {
-                inlineData: {
-                  mimeType: "image/jpeg",
-                  data: base64Image
-                }
-              }
+              { text: userPrompt },
+              { inlineData: { mimeType: "image/jpeg", data: base64Image } }
             ]
           }
         ]
       };
 
       console.log('Sending request to Gemini API...');
-      // Call the Gemini API
-      const response = await axios.post(apiUrl, payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.post(apiUrl, payload, { headers: { 'Content-Type': 'application/json' } });
       console.log('API Response received:', response.data);
 
-      // Extract analysis text from the API response
       let analysisText = "No valid text found in response.";
-      if (response.data.candidates &&
-          response.data.candidates[0] &&
-          response.data.candidates[0].content &&
-          response.data.candidates[0].content.parts &&
-          response.data.candidates[0].content.parts[0] &&
-          response.data.candidates[0].content.parts[0].text) {
+      if (response.data.candidates?.[0]?.content?.parts?.[0]?.text) {
         analysisText = response.data.candidates[0].content.parts[0].text;
       } else {
         console.log('Full Gemini API response:', response.data);
       }
 
-      // Create or update the output window with the new analysis text
       createOrUpdateOutputWindow(analysisText);
 
     } catch (error) {
@@ -144,7 +144,7 @@ app.whenReady().then(() => {
     console.log(`Global shortcut registered: ${shortcut}`);
   }
 
-  app.on('activate', function () {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
@@ -153,11 +153,11 @@ app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
 
-app.on('window-all-closed', function () {
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// Function to capture the primary screen and return the image as a base64 string
+// ✅ Capture Screenshot Function
 async function captureScreenshot() {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.size;
@@ -167,7 +167,6 @@ async function captureScreenshot() {
     thumbnailSize: { width, height }
   });
   
-  // Get the primary screen source (fallback to the first source)
   const primarySource = sources.find(source => source.display_id === primaryDisplay.id.toString()) || sources[0];
   
   if (!primarySource) {
@@ -175,20 +174,16 @@ async function captureScreenshot() {
   }
   
   const thumbnail = primarySource.thumbnail.toDataURL();
-  const base64Image = thumbnail.split(',')[1];
-  return base64Image;
+  return thumbnail.split(',')[1];
 }
 
-// IPC Handlers for settings (used by your renderer process)
-
-// Save settings (API key, model, and optional prompt)
+// ✅ IPC Handlers for Settings
 ipcMain.handle('save-settings', (event, settings) => {
   store.set('settings', settings);
   console.log('Settings saved:', settings);
   return true;
 });
 
-// Get settings
 ipcMain.handle('get-settings', () => {
   const settings = store.get('settings') || {};
   console.log('Settings retrieved:', settings);

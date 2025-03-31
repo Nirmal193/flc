@@ -1,7 +1,7 @@
-// output-preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  onUpdateAnalysis: (callback) =>
-    ipcRenderer.on('update-analysis', (event, analysisText) => callback(analysisText))
+  setWindowOpacity: (opacity) => ipcRenderer.send('set-opacity', opacity),
+  setWindowBackgroundColor: (color) => ipcRenderer.send('set-bg-color', color),
+  closeWindow: () => ipcRenderer.send('close-output-window')
 });

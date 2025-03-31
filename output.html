@@ -6,9 +6,19 @@
   <link rel="stylesheet" href="output.css">
 </head>
 <body>
+  <div id="closeButton">X</div>
+  <div class="controls">
+    <label>Transparency:</label>
+    <input type="range" id="transparencySlider" min="10" max="100" value="100">
+    
+    <label>Background:</label>
+    <input type="color" id="bgColorPicker" value="#f5f5f5">
+  </div>
+
   <div class="conversation-container" id="conversationContainer">
     <!-- New messages will be appended here -->
   </div>
+
   <script src="output.js"></script>
 </body>
 </html>
