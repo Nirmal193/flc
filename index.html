@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gemini Screenshot Analyzer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #1a73e8;
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #174ea6;
+    }
+    #status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+      text-align: center;
+    }
+    .success {
+      background-color: #e6f4ea;
+      color: #0d652d;
+    }
+    .error {
+      background-color: #fce8e6;
+      color: #c5221f;
+    }
+    .loading {
+      background-color: #e8f0fe;
+      color: #174ea6;
+    }
+    #response {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+      display: none;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    #screenshot-preview {
+      margin-top: 20px;
+      text-align: center;
+      display: none;
+    }
+    #screenshot-preview img {
+      max-width: 100%;
+      max-height: 300px;
+      border: 1px solid #ddd;
+    }
+    .preview-label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .info {
+      background-color: #e8f0fe;
+      color: #174ea6;
+      text-align: center;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: #1a73e8;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gemini Screenshot Analyzer</h1>
+    
+    <!-- Info about global shortcut -->
+    <div class="info">
+      You can use the keyboard shortcut <strong>Ctrl/Cmd + prtSc</strong> to capture a screenshot and analyze it.
+    </div>
+    
+    <div class="form-group">
+      <label for="apiKey">Gemini API Key:</label>
+      <input type="text" id="apiKey" placeholder="Enter your Gemini API key">
+    </div>
+
+    <div class="form-group">
+      <label for="model">Gemini Model:</label>
+      <select id="model">
+        <option value="gemini-2.0-flash-thinking-exp-01-21">gemini-2.0-flash-thinking-exp-01-21</option>
+        <!-- You can add more model options here if available -->
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="prompt">Question about the screenshot:</label>
+      <textarea id="prompt" placeholder="What do you want to ask about the image? (Default: 'What is in this image?')">What is in this image?</textarea>
+    </div>
+    
+    <!-- Optional manual capture button -->
+    <!-- <button id="captureButton">Capture Screenshot & Analyze with Gemini</button> -->
+    
+    <div id="status"></div>
+    
+    <div id="screenshot-preview">
+      <span class="preview-label">Screenshot Preview:</span>
+      <img id="preview-image" alt="Screenshot preview">
+    </div>
+    
+    <div id="response"></div>
+  </div>
+  
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Load saved settings
+      const settings = await ipcRenderer.invoke('get-settings');
+      if (settings.apiKey) document.getElementById('apiKey').value = settings.apiKey;
+      if (settings.model) document.getElementById('model').value = settings.model;
+      if (settings.prompt) document.getElementById('prompt').value = settings.prompt;
+      
+      // Capture button click handler (manual trigger)
+      document.getElementById('captureButton').addEventListener('click', captureAndAnalyze);
+    });
+    
+    async function captureAndAnalyze() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const model = document.getElementById('model').value;
+      const prompt = document.getElementById('prompt').value.trim() || "What is in this image?";
+      const statusElement = document.getElementById('status');
+      const responseElement = document.getElementById('response');
+      const previewElement = document.getElementById('screenshot-preview');
+      
+      // Hide previous results
+      responseElement.style.display = 'none';
+      previewElement.style.display = 'none';
+      
+      // Validate API key and model
+      if (!apiKey || !model) {
+        showStatus('Please enter your Gemini API key and select a model', 'error');
+        return;
+      }
+      
+      // Save settings (store API key, model, and prompt)
+      await ipcRenderer.invoke('save-settings', { apiKey, model, prompt });
+      
+      try {
+        // Show loading status
+        showStatus('Capturing screenshot...', 'loading', true);
+        
+        // Capture screenshot
+        const base64Image = await ipcRenderer.invoke('capture-screenshot');
+        
+        // Show preview
+        const previewImage = document.getElementById('preview-image');
+        previewImage.src = `data:image/jpeg;base64,${base64Image}`;
+        previewElement.style.display = 'block';
+        
+        // Show status
+        showStatus('Analyzing with Gemini API...', 'loading', true);
+        
+        // Send to Gemini API
+        const response = await ipcRenderer.invoke('analyze-image', apiKey, prompt, base64Image);
+        
+        // Display success
+        showStatus('Analysis complete!', 'success');
+        
+        // Extract and display the response text
+        if (response.candidates && 
+            response.candidates[0] && 
+            response.candidates[0].content && 
+            response.candidates[0].content.parts && 
+            response.candidates[0].content.parts[0] && 
+            response.candidates[0].content.parts[0].text) {
+          
+          const analysisText = response.candidates[0].content.parts[0].text;
+          responseElement.textContent = analysisText;
+          responseElement.style.display = 'block';
+        } else {
+          responseElement.textContent = "Received response but couldn't extract text. Check console for details.";
+          responseElement.style.display = 'block';
+          console.log('Full Gemini API response:', response);
+        }
+        
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+        console.error('Screenshot analysis error:', error);
+      }
+    }
+    
+    function showStatus(message, type, showSpinner = false) {
+      const statusElement = document.getElementById('status');
+      
+      let content = message;
+      if (showSpinner) {
+        content = `<div class="spinner"></div>${message}`;
+      }
+      
+      statusElement.innerHTML = content;
+      statusElement.style.display = 'block';
+      
+      // Clear existing classes and set new one
+      statusElement.className = '';
+      statusElement.classList.add(type);
+    }
+  </script>
+</body>
+</html>
