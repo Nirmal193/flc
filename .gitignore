@@ -1,0 +1,9 @@
+node_modules/
+dist/          # Electron build output
+build/         # Electron build output
+out/           # Electron build output
+release/       # Electron build output
+*.log          # Log files
+*.sqlite       # sqlite files
+.DS_Store      # macOS desktop service store
+.env  
