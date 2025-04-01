@@ -107,12 +107,67 @@ document.addEventListener('DOMContentLoaded', () => {
     window.electronAPI.closeWindow();
   });
   
-  // Process incoming messages from main
+  // Add language detection function
+  function detectLanguage(code) {
+    if (code.includes('```javascript') || code.includes('```js')) return 'javascript';
+    if (code.includes('```python') || code.includes('```py')) return 'python';
+    if (code.includes('```java')) return 'java';
+    if (code.includes('function') || code.includes('const ') || code.includes('let ')) return 'javascript';
+    if (code.includes('def ') || code.includes('class ') || code.includes('import ')) return 'python';
+    if (code.includes('public class') || code.includes('private ')) return 'java';
+    return 'text';
+  }
+
+  // Replace the existing onUpdateAnalysis handler
   window.electronAPI.onUpdateAnalysis((analysisText) => {
     const messageElement = document.createElement('div');
     messageElement.className = 'message system';
-    messageElement.textContent = analysisText;
-    
+
+    // Split by code blocks, preserving the backticks
+    const parts = analysisText.split(/(```[a-zA-Z]*\n[\s\S]*?\n```)/g);
+
+    parts.forEach(part => {
+      if (part.startsWith('```')) {
+        // Extract language and code
+        const firstLineEnd = part.indexOf('\n');
+        const language = part.slice(3, firstLineEnd).trim() || detectLanguage(part);
+        const code = part.slice(firstLineEnd + 1, -3).trim();
+
+        const preElement = document.createElement('pre');
+        const codeElement = document.createElement('code');
+        
+        preElement.className = `line-numbers language-${language}`;
+        codeElement.className = `language-${language}`;
+        codeElement.textContent = code;
+        
+        preElement.appendChild(codeElement);
+        messageElement.appendChild(preElement);
+
+        // Highlight the code
+        setTimeout(() => Prism.highlightElement(codeElement), 0);
+      } else if (part.trim()) {
+        // Handle regular text with proper formatting
+        const textContainer = document.createElement('div');
+        textContainer.className = 'text-content';
+        
+        // Split text by newlines and preserve formatting
+        const lines = part.trim().split('\n');
+        lines.forEach((line, index) => {
+          if (line.trim()) {
+            const p = document.createElement('p');
+            p.textContent = line;
+            textContainer.appendChild(p);
+          }
+          // Add spacing between paragraphs
+          if (index < lines.length - 1 && line.trim()) {
+            textContainer.appendChild(document.createElement('br'));
+          }
+        });
+        
+        messageElement.appendChild(textContainer);
+      }
+    });
+
     // Apply current styles
     if (window.currentSettings) {
       messageElement.style.color = window.currentSettings.textColor;
@@ -125,15 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
       messageElement.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
     
-    // Add to container
     conversationContainer.appendChild(messageElement);
     
-    // Force scroll to bottom
     setTimeout(() => {
       messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 50);
   });
-  
+
   // Handle background color updates from main process
   window.electronAPI.onUpdateBgColor((color) => {
     savePreference('bgColor', color);

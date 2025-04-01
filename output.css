@@ -137,3 +137,44 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
+
+/* Code block styling */
+.message pre[class*="language-"] {
+  margin: 10px 0;
+  padding: 1em;
+  border-radius: 4px;
+  background: rgba(45, 45, 45, 0.9) !important;
+}
+
+.message code {
+  font-family: 'Fira Code', Consolas, Monaco, monospace;
+  font-size: 14px;
+  tab-size: 2;
+}
+
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1em 0;
+}
+
+/* Style for regular text within message */
+.message > div:not(pre) {
+  margin: 0.5em 0;
+  line-height: 1.4;
+}
+
+/* Text content styling */
+.text-content {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.text-content p {
+  margin: 0;
+  padding: 0;
+}
+
+/* Adjust spacing between content blocks */
+.message > *:not(:last-child) {
+  margin-bottom: 15px;
+}
